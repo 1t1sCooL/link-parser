@@ -1,29 +1,31 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-import fs from 'fs/promises';
-import { MongoClient } from 'mongodb';
+import axios from "axios";
+import * as cheerio from "cheerio";
+import fs from "fs/promises";
+import { MongoClient } from "mongodb";
 
-const url = 'https://kadikama.com/page/';
+const url = "https://kadikama.com/page/";
 const cartoonsLinks = [];
 let count = 1;
-const mongoUrl = process.env.MONGO_URI || 'mongodb://1t1sCooL:21089758%23MMAla@mongodb:27017/kadikama?authSource=kadikama&directConnection=true&retryWrites=true&w=majority';
+const mongoUrl = process.env.MONGO_URI;
 
 const dbName = "kadikama";
 
-console.time('fetchCartoons');
+console.time("fetchCartoons");
 
 async function getMaxPages() {
   try {
     const { data } = await axios.get(`${url}${count}`);
     const $ = cheerio.load(data);
 
-    const pages = $('#dle-content .navigation a').map((_, el) => $(el).text()).get();
+    const pages = $("#dle-content .navigation a")
+      .map((_, el) => $(el).text())
+      .get();
     if (pages.length < 2) {
       throw new Error(`Couldn't determine the number of pages`);
     }
     return parseInt(pages[pages.length - 2], 10);
   } catch (error) {
-    console.error('Error in determining the number of pages:', error.message);
+    console.error("Error in determining the number of pages:", error.message);
     throw error;
   }
 }
@@ -36,7 +38,7 @@ async function fetchCartoons() {
     await client.connect();
     console.log("Connection to MongoDB is successful");
     const db = client.db(dbName);
-    const collection = db.collection('Links');
+    const collection = db.collection("Links");
 
     const maxPages = await getMaxPages();
     console.log(`Pages detected: ${maxPages}`);
@@ -46,9 +48,9 @@ async function fetchCartoons() {
       const { data } = await axios.get(`${url}${count}`);
       const $ = cheerio.load(data);
 
-      $('#dle-content a').each((index, element) => {
-        const link = $(element).attr('href');
-        if (link && link.endsWith('.html') && link.startsWith('http')) {
+      $("#dle-content a").each((index, element) => {
+        const link = $(element).attr("href");
+        if (link && link.endsWith(".html") && link.startsWith("http")) {
           cartoonsLinks.push(link);
         }
       });
@@ -71,17 +73,17 @@ async function fetchCartoons() {
       }
     }
 
-    await fs.writeFile('links.json', JSON.stringify(cartoonsLinks, null, 2));
-    console.log('Links are saved in links.json');
+    await fs.writeFile("links.json", JSON.stringify(cartoonsLinks, null, 2));
+    console.log("Links are saved in links.json");
   } catch (error) {
-    await fs.writeFile('links2.json', JSON.stringify(cartoonsLinks, null, 2));
+    await fs.writeFile("links2.json", JSON.stringify(cartoonsLinks, null, 2));
     console.error("Error during parsing:", error.message);
   } finally {
     if (client) {
       await client.close();
       console.log("Connection to MongoDB is closed");
     }
-    console.timeEnd('fetchCartoons');
+    console.timeEnd("fetchCartoons");
   }
 }
 
