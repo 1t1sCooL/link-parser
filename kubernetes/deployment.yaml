@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkparser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linkparser
+  template:
+    metadata:
+      labels:
+        app: linkparser
+    spec:
+      containers:
+        - name: linkparser
+          image: 1t1scool/linkparser:latest
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-uri-secret
+                  key: MONGO_URL

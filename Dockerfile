@@ -13,6 +13,6 @@ RUN chmod +x /app/run_parser.sh
 
 RUN sed -i 's|node |/usr/local/bin/node |g' /app/run_parser.sh
 
-RUN echo '0 4 * * * /app/run_parser.sh >> /proc/1/fd/1 2>&1' | crontab -
+RUN echo '0 4 * * * . /app/env.sh && /app/run_parser.sh >> /proc/1/fd/1 2>&1' | crontab -
 
-CMD ["cron", "-f"]
+CMD ["sh", "-c", "printenv | sed 's/^\\([^=]*\\)=\\(.*\\)$/export \\1=\"\\2\"/' > /app/env.sh && cron -f"]
